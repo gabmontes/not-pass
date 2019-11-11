@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <title>Waiting</title>
+  </head>
+  <body>
+    Waiting
+    <script src="{{ apiUrl }}/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io('{{ apiUrl }}')
+
+      socket.on('login', function() {
+        console.log('Logged in')
+        window.location = '/success.html'
+      })
+    </script>
+  </body>
+</html>

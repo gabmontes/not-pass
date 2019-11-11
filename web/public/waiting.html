@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <title>Waiting</title>
+  </head>
+  <body>
+    Waiting
+    <script src="http://localhost:3001/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io('http://localhost:3001')
+
+      socket.on('login', function() {
+        console.log('Logged in')
+        window.location = '/success.html'
+      })
+    </script>
+  </body>
+</html>

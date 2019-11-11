@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  web:
+    build: web
+    env_file:
+      - web/.env
+    environment:
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+
+  api:
+    build: api
+    env_file:
+      - api/.env
+    environment:
+      PORT: "3001"
+    ports:
+      - "3001:3001"
