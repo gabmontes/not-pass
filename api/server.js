@@ -1,9 +1,11 @@
 'use strict'
 
 const bodyParser = require('body-parser')
+const connectRedis = require('connect-redis')
 const express = require('express')
 const http = require('http')
 const nodemailer = require('nodemailer')
+const redis = require('redis')
 const session = require('express-session')
 const socketIo = require('socket.io')
 
@@ -24,10 +26,14 @@ const app = express()
 const httpServer = http.createServer(app)
 const io = socketIo(httpServer)
 
+const client = redis.createClient()
+const RedisStore = connectRedis(session)
+
 const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
-  secret: process.env.SESSION_SECRET
+  secret: process.env.SESSION_SECRET,
+  store: new RedisStore({ client })
 })
 app.use(sessionMiddleware)
 app.use(bodyParser.urlencoded({ extended: true }))
