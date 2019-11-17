@@ -34,17 +34,10 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.post('/login', [
   function(req, res, next) {
-    if (!req.body.email) {
-      console.log('No email received')
-      res.end(400)
-      return
-    }
-    next()
-  },
-  function(req, res, next) {
     console.log('Initializing session')
     req.session.email = req.body.email
-    req.session.otp = (Math.random() * 1000000).toFixed(0)
+    req.session.code = (Math.random() * 1000000).toFixed(0)
+    req.session.validated = false
     next()
   },
   function(req, res, next) {
@@ -53,7 +46,7 @@ app.post('/login', [
       from: emailUser,
       to: req.body.email,
       subject: 'Login',
-      html: `<a href="${baseUrl}:${port}/login?otp=${req.session.otp}">Login</a>`
+      html: `<a href="${baseUrl}:${port}/login?&sessionId=${req.session.id}&code=${req.session.code}">Login</a>`
     }
     transporter.sendMail(mailOptions, next)
   },
@@ -65,16 +58,14 @@ app.post('/login', [
 
 app.get('/login', [
   function(req, res, next) {
-    if (!req.query.otp) {
-      console.log('No OTP')
-      res.end(400)
-      return
-    }
-    next()
+    req.sessionStore.get(req.query.sessionId, function(err, session) {
+      req.retrievedSession = session
+      next(err)
+    })
   },
   function(req, res, next) {
-    if (req.query.otp !== req.session.otp) {
-      console.log('Invalid OTP')
+    if (req.query.code !== req.retrievedSession.code) {
+      console.log('Invalid code')
       res.redirect(303, `${baseUrl}:${webPort}/sorry.html`)
       return
     }
@@ -82,16 +73,24 @@ app.get('/login', [
   },
   function(req, res, next) {
     console.log('Retrieving socket')
-    io.sockets.connected[req.session.socketId].emit('login')
+    io.sockets.connected[req.retrievedSession.socketId].emit('login')
     next()
   },
   function(req, res, next) {
-    console.log('Valid OTP')
-    delete req.session.otp
-    req.session.validated = true
+    console.log('Valid code')
+    delete req.retrievedSession.code
+    delete req.retrievedSession.socketId
+    req.retrievedSession.validated = true
+    req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
+  },
+  function(req, res) {
     res.redirect(303, `${baseUrl}:${webPort}/thanks.html`)
   }
 ])
+
+app.get('/debug', function(req, res) {
+  res.json(req.session)
+})
 
 io.use(function(socket, next) {
   console.log('Parsing session')
