@@ -72,16 +72,16 @@ app.get('/login', [
     next()
   },
   function(req, res, next) {
-    console.log('Retrieving socket')
-    io.sockets.connected[req.retrievedSession.socketId].emit('login')
-    next()
-  },
-  function(req, res, next) {
     console.log('Valid code')
     delete req.retrievedSession.code
     delete req.retrievedSession.socketId
     req.retrievedSession.validated = true
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
+  },
+  function(req, res, next) {
+    console.log('Retrieving socket')
+    io.sockets.connected[req.retrievedSession.socketId].emit('login')
+    next()
   },
   function(req, res) {
     res.redirect(303, `${baseUrl}:${webPort}/thanks.html`)
@@ -96,10 +96,6 @@ app.post('/logout', [
     res.end(200)
   }
 ])
-
-app.get('/debug', function(req, res) {
-  res.json(req.session)
-})
 
 io.use(function(socket, next) {
   console.log('Parsing session')
