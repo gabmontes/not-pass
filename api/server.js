@@ -88,6 +88,15 @@ app.get('/login', [
   }
 ])
 
+app.post('/logout', [
+  function(req, res, next) {
+    req.session.destroy(next)
+  },
+  function(req, res) {
+    res.end(200)
+  }
+])
+
 app.get('/debug', function(req, res) {
   res.json(req.session)
 })
