@@ -1,6 +1,7 @@
 'use strict'
 
 const bodyParser = require('body-parser')
+const cors = require('cors')
 const express = require('express')
 const http = require('http')
 const nodemailer = require('nodemailer')
@@ -25,16 +26,29 @@ const httpServer = http.createServer(app)
 const io = socketIo(httpServer)
 
 const sessionMiddleware = session({
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   secret: process.env.SESSION_SECRET
 })
 app.use(sessionMiddleware)
 app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
+app.use(cors({ origin: true, credentials: true }))
+
+app.get('/me', [
+  function(req, res) {
+    console.log('Reading session', req.session.id)
+    if (!req.session.validated) {
+      res.sendStatus(401)
+      return
+    }
+    res.json({ email: req.session.email })
+  }
+])
 
 app.post('/login', [
   function(req, res, next) {
-    console.log('Initializing session')
+    console.log('Initializing session', req.session.id)
     req.session.email = req.body.email
     req.session.code = (Math.random() * 1000000).toFixed(0)
     req.session.validated = false
@@ -52,7 +66,11 @@ app.post('/login', [
   },
   function(req, res, next) {
     console.log('Email sent')
-    res.redirect(303, `${baseUrl}:${webPort}/waiting.html`)
+    if (req.query.redirect) {
+      res.redirect(303, req.query.redirect)
+      return
+    }
+    res.sendStatus(200)
   }
 ])
 
@@ -66,7 +84,8 @@ app.get('/login', [
   function(req, res, next) {
     if (req.query.code !== req.retrievedSession.code) {
       console.log('Invalid code')
-      res.redirect(303, `${baseUrl}:${webPort}/sorry.html`)
+      res.sendStatus(403)
+      // res.redirect(303, `${baseUrl}:${webPort}/sorry.html`)
       return
     }
     next()
@@ -74,17 +93,17 @@ app.get('/login', [
   function(req, res, next) {
     console.log('Valid code')
     delete req.retrievedSession.code
-    delete req.retrievedSession.socketId
     req.retrievedSession.validated = true
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res, next) {
     console.log('Retrieving socket')
     io.sockets.connected[req.retrievedSession.socketId].emit('login')
-    next()
+    delete req.retrievedSession.socketId
+    req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res) {
-    res.redirect(303, `${baseUrl}:${webPort}/thanks.html`)
+    res.redirect(303, `${baseUrl}:${webPort}/success.html`)
   }
 ])
 
@@ -93,7 +112,7 @@ app.post('/logout', [
     req.session.destroy(next)
   },
   function(req, res) {
-    res.end(200)
+    res.sendStatus(200)
   }
 ])
 
@@ -103,11 +122,12 @@ io.use(function(socket, next) {
 })
 
 io.use(function(socket, next) {
+  console.log('Session parsed', socket.handshake.session.id)
   if (!socket.handshake.session.email) {
     next()
     return
   }
-  console.log('Saving reference to socket')
+  console.log('Saving reference to socket', socket.id)
   socket.handshake.session.socketId = socket.id
   socket.handshake.session.save(next)
 })
