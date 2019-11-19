@@ -19,10 +19,9 @@ function Login() {
 
   return (
     <div>
-      <div>Login page</div>
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email">e-mail</label>
+          <label htmlFor="email">E-mail</label>
           <input
             type="text"
             name="email"
