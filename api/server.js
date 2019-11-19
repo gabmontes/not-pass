@@ -9,11 +9,11 @@ const session = require('express-session')
 const socketIo = require('socket.io')
 
 require('dotenv').config()
-const emailUser = process.env.EMAIL_USER
+const apiUrl = process.env.API_URL
 const emailPass = process.env.EMAIL_PASS
+const emailUser = process.env.EMAIL_USER
 const port = process.env.PORT
-const webPort = process.env.WEB_PORT
-const baseUrl = process.env.BASE_URL
+const webUrl = process.env.WEB_URL
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -58,7 +58,7 @@ app.post('/login', [
     next()
   },
   function(req, res, next) {
-    const authUrl = `${baseUrl}:${port}/login`
+    const authUrl = `${apiUrl}:${port}/login`
     const authQuery = `sessionId=${req.session.id}&authCode=${req.session.authCode}`
     const fullUrl = `${authUrl}?${authQuery}`
     const mailOptions = {
@@ -106,7 +106,7 @@ app.get('/login', [
   },
   function(req, res, next) {
     if (req.retrievedSession.authCode !== req.query.authCode) {
-      res.redirect(303, `${baseUrl}:${webPort}/unauthorized`)
+      res.redirect(303, `${webUrl}/unauthorized`)
       return
     }
     next()
@@ -122,7 +122,7 @@ app.get('/login', [
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res) {
-    res.redirect(303, `${baseUrl}:${webPort}/authorized`)
+    res.redirect(303, `${webUrl}/authorized`)
   }
 ])
 
