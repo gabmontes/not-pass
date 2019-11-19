@@ -1,14 +1,16 @@
 <html>
   <head>
     <title>Waiting</title>
+    <link rel="stylesheet" type="text/css" href="index.css" />
   </head>
-  <body>
-    Waiting...
+  <body id="root">
+    <div>
+      Waiting...
+    </div>
     <script src="{{ apiUrl }}/socket.io/socket.io.js"></script>
     <script>
       var socket = io('{{ apiUrl }}')
       socket.on('login', function() {
-        console.log('Logged in')
         window.location = '/success.html'
       })
     </script>

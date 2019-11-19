@@ -1,16 +1,22 @@
 <html>
   <head>
     <title>Email login</title>
+    <link rel="stylesheet" type="text/css" href="index.css" />
   </head>
-  <body>
-    <form action="{{ apiUrl }}/login" method="post">
-      <div>
-        <label for="email">e-mail</label>
-        <input type="text" name="email" id="email" required />
-      </div>
-      <div>
-        <button>Login</button>
-      </div>
-    </form>
+  <body id="root">
+    <div>
+      <form
+        action="{{ apiUrl }}/login?redirect={{ webUrl }}/waiting.html"
+        method="post"
+      >
+        <div>
+          <label for="email">E-mail</label>
+          <input type="text" name="email" id="email" required />
+        </div>
+        <div>
+          <button>Login</button>
+        </div>
+      </form>
+    </div>
   </body>
 </html>
