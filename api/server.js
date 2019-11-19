@@ -9,7 +9,6 @@ const session = require('express-session')
 const socketIo = require('socket.io')
 
 require('dotenv').config()
-
 const emailUser = process.env.EMAIL_USER
 const emailPass = process.env.EMAIL_PASS
 const port = process.env.PORT
@@ -26,8 +25,8 @@ const httpServer = http.createServer(app)
 const io = socketIo(httpServer)
 
 const sessionMiddleware = session({
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   secret: process.env.SESSION_SECRET
 })
 app.use(sessionMiddleware)
@@ -37,8 +36,7 @@ app.use(cors({ origin: true, credentials: true }))
 
 app.get('/me', [
   function(req, res) {
-    console.log('Reading session', req.session.id)
-    if (!req.session.validated) {
+    if (!req.session.authorized) {
       res.sendStatus(401)
       return
     }
@@ -48,24 +46,34 @@ app.get('/me', [
 
 app.post('/login', [
   function(req, res, next) {
-    console.log('Initializing session', req.session.id)
-    req.session.email = req.body.email
-    req.session.code = (Math.random() * 1000000).toFixed(0)
-    req.session.validated = false
+    if (req.session.authorized) {
+      res.sendStatus(200)
+    }
     next()
   },
   function(req, res, next) {
-    console.log('Sending email')
+    req.session.email = req.body.email
+    req.session.authCode = (Math.random() * 1000000).toFixed(0)
+    req.session.authorized = false
+    next()
+  },
+  function(req, res, next) {
+    const authUrl = `${baseUrl}:${port}/login`
+    const authQuery = `sessionId=${req.session.id}&authCode=${req.session.authCode}`
+    const fullUrl = `${authUrl}?${authQuery}`
     const mailOptions = {
       from: emailUser,
-      to: req.body.email,
-      subject: 'Login',
-      html: `<a href="${baseUrl}:${port}/login?&sessionId=${req.session.id}&code=${req.session.code}">Login</a>`
+      to: req.session.email,
+      subject: 'Login request',
+      html: `
+        <p>Authorize the login using the following link:</p>
+        <p><a href=${fullUrl}>${fullUrl}</a></p>
+        <p>Once authorized, you can close the popup.</p>
+      `
     }
     transporter.sendMail(mailOptions, next)
   },
   function(req, res, next) {
-    console.log('Email sent')
     if (req.query.redirect) {
       res.redirect(303, req.query.redirect)
       return
@@ -76,34 +84,45 @@ app.post('/login', [
 
 app.get('/login', [
   function(req, res, next) {
-    req.sessionStore.get(req.query.sessionId, function(err, session) {
-      req.retrievedSession = session
-      next(err)
-    })
-  },
-  function(req, res, next) {
-    if (req.query.code !== req.retrievedSession.code) {
-      console.log('Invalid code')
-      res.sendStatus(403)
-      // res.redirect(303, `${baseUrl}:${webPort}/sorry.html`)
+    if (!req.query.sessionId || !req.query.authCode) {
+      res.sendStatus(400)
       return
     }
     next()
   },
   function(req, res, next) {
-    console.log('Valid code')
-    delete req.retrievedSession.code
-    req.retrievedSession.validated = true
+    req.sessionStore.get(req.query.sessionId, function(err, session) {
+      if (err) {
+        next(err)
+        return
+      }
+      if (!session) {
+        res.sendStatus(400)
+        return
+      }
+      req.retrievedSession = session
+      next()
+    })
+  },
+  function(req, res, next) {
+    if (req.retrievedSession.authCode !== req.query.authCode) {
+      res.redirect(303, `${baseUrl}:${webPort}/unauthorized`)
+      return
+    }
+    next()
+  },
+  function(req, res, next) {
+    delete req.retrievedSession.authCode
+    req.retrievedSession.authorized = true
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res, next) {
-    console.log('Retrieving socket')
     io.sockets.connected[req.retrievedSession.socketId].emit('login')
     delete req.retrievedSession.socketId
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res) {
-    res.redirect(303, `${baseUrl}:${webPort}/success.html`)
+    res.redirect(303, `${baseUrl}:${webPort}/authorized`)
   }
 ])
 
@@ -117,19 +136,25 @@ app.post('/logout', [
 ])
 
 io.use(function(socket, next) {
-  console.log('Parsing session')
   sessionMiddleware(socket.handshake, {}, next)
 })
-
 io.use(function(socket, next) {
-  console.log('Session parsed', socket.handshake.session.id)
   if (!socket.handshake.session.email) {
     next()
     return
   }
-  console.log('Saving reference to socket', socket.id)
   socket.handshake.session.socketId = socket.id
   socket.handshake.session.save(next)
+})
+
+io.on('connect', function(socket) {
+  if (!socket.handshake.session.email || !socket.handshake.session.authCode) {
+    socket.emit('relogin')
+    return
+  }
+  if (socket.handshake.session.authorized) {
+    socket.emit('login')
+  }
 })
 
 httpServer.listen(port, function() {
