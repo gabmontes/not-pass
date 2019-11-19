@@ -2,12 +2,14 @@ import { useHistory } from 'react-router-dom'
 import io from 'socket.io-client'
 import React, { useEffect } from 'react'
 
+const apiUrl = process.env.REACT_APP_API_URL
+
 function Waiting() {
   const history = useHistory()
 
   useEffect(
     function() {
-      const socket = io('http://localhost:3001')
+      const socket = io(apiUrl)
 
       socket.on('login', function() {
         history.push('/')

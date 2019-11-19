@@ -1,13 +1,15 @@
 import { useHistory } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 
+const apiUrl = process.env.REACT_APP_API_URL
+
 function Home() {
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [email, setEmail] = useState('')
 
   useEffect(function() {
-    fetch('http://localhost:3001/me', { credentials: 'include' })
+    fetch(`${apiUrl}/me`, { credentials: 'include' })
       .then(function(res) {
         if (res.status >= 400) {
           return
@@ -29,7 +31,7 @@ function Home() {
   }
 
   function handleLogout() {
-    fetch('http://localhost:3001/logout', {
+    fetch(`${apiUrl}/logout`, {
       method: 'POST',
       credentials: 'include'
     }).then(function() {

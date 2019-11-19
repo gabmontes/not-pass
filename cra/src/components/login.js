@@ -1,13 +1,15 @@
 import { useHistory } from 'react-router-dom'
 import React, { useState } from 'react'
 
+const apiUrl = process.env.REACT_APP_API_URL
+
 function Login() {
   const [email, setEmail] = useState('')
   const history = useHistory()
 
   function handleSubmit(event) {
     event.preventDefault()
-    fetch('http://localhost:3001/login', {
+    fetch(`${apiUrl}/login`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify({ email }),
