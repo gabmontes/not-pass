@@ -58,7 +58,7 @@ app.post('/login', [
     next()
   },
   function(req, res, next) {
-    const authUrl = `${apiUrl}:${port}/login`
+    const authUrl = `${apiUrl}${port ? `:${port}` : ''}/login`
     const authQuery = `sessionId=${req.session.id}&authCode=${req.session.authCode}`
     const fullUrl = `${authUrl}?${authQuery}`
     const mailOptions = {
