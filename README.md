@@ -6,21 +6,23 @@ Once followed, the session is automatically authorized.
 
 Think about it as an 1.5FA system! Better than SFA but not fully 2FA.
 
+## Login flow
+
+- The client sends an email address to the server.
+- The server sends an authorization email with a unique token linked to that email address.
+- Once the server confirms the email was sent, the client opens a [Socket.IO](https://socket.io) connection to be notified when the login is authorized.
+- The user follows the authorization link in the email.
+- The server validates the token, the email address and sends the authorization message back.
+- The client receives the authorization and proceeds.
+
+### Benefits
+
 Some benefits of this approach are:
 
 - Easier to use: no passwords to manage or remember!
 - Better user experience than traditional "create user/pass, verify email and login" flows.
 - Instant user onboarding: user creation and login are a single verified step.
 - Easier to implement: no passwords will be leaked/compromised ever.
-
-## New login flow overview
-
-- The client sends an email address to the server.
-- The server sends an authorization email with a unique token linked to that email address.
-- Once the server confirms the email was sent, the client opens a [Socket.IO](https://socket.io) connection to be notified when the login is authorized.
-- The user follows the authorization link.
-- The server validates the token, the email address and sends the authorization message back.
-- The client receives the authorization and proceeds.
 
 ## Run it locally
 
@@ -96,7 +98,3 @@ As with the API server, an alias has to be set for the website so it matches `WE
 ```console
 $ now alias set <the website deployment url> <the URL set in WEB_URL>
 ```
-
-## License
-
-MIT
