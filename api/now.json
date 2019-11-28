@@ -1,0 +1,12 @@
+{
+  "name": "not-pass-api",
+  "version": 1,
+  "env": {
+    "API_URL": "https://not-pass-api.now.sh",
+    "EMAIL_PASS": "@not-pass-email-pass",
+    "EMAIL_USER": "@not-pass-email-user",
+    "SESSION_SECRET": "@not-pass-session-secret",
+    "WEB_URL": "https://not-pass-web.now.sh"
+  },
+  "public": true
+}

@@ -1,0 +1,8 @@
+{
+  "name": "not-pass-web",
+  "version": 1,
+  "env": {
+    "REACT_APP_API_URL": "https://not-pass-api.now.sh"
+  },
+  "public": true
+}
