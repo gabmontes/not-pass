@@ -10,12 +10,12 @@ Think about it as an 1.5FA system! Better than SFA but not fully 2FA.
 
 - The client sends an email address to the server.
 - The server sends an authorization email with a unique token linked to that email address.
-- Once the server confirms the email was sent, the client opens a [Socket.IO](https://socket.io) connection to be notified when the login is authorized.
+- Once the server confirms the email was sent, the client opens a websocket connection to be notified when the login is authorized.
 - The user follows the authorization link in the email.
 - The server validates the token, the email address and sends the authorization message back.
 - The client receives the authorization and proceeds.
 
-### Benefits
+## Benefits
 
 Some benefits of this approach are:
 
@@ -23,6 +23,24 @@ Some benefits of this approach are:
 - Better user experience than traditional "create user/pass, verify email and login" flows.
 - Instant user onboarding: user creation and login are a single verified step.
 - Easier to implement: no passwords will be leaked/compromised ever.
+
+## Technical notes
+
+The website is a [React](https://reactjs.org/) application that uses only functional components and hooks.
+It can be built and served through any static hosting mechanism.
+
+The API is an [Express](https://expressjs.com/) server that exposes the HTTP routes to login, logout, etc.
+It does not serve the website to demonstrate it can opperate completely independent of the UI.
+That allows other login flows from CLI tools, standalone applications, not only the website.
+
+The user's login status is stored in a server-side in-memory session.
+A Redis server or any other session store could be easily implemented.
+
+The server communicates the login/authorization through a [Socket.IO](https://socket.io) connection opened by the client.
+The server also sends emails using [Nodemailer](https://nodemailer.com) and a Gmail account.
+
+**The implementation is on purpose focused on simplicity and easy-to-follow code.**
+There are some edge cases not conisdered, checks not implemented and many security improvements that _must_ be done before using this approach on a real-world product.
 
 ## Run it locally
 
