@@ -8,6 +8,7 @@ function Login() {
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [waitingAuth, setWaitingAuth] = useState(false)
+  const [inProgress, setInprogress] = useState(false)
 
   const history = useHistory()
 
@@ -57,6 +58,7 @@ function Login() {
 
   function handleSubmit(event) {
     event.preventDefault()
+    setInprogress(true)
     fetch(`${apiUrl}/login`, {
       method: 'POST',
       credentials: 'include',
@@ -64,6 +66,7 @@ function Login() {
       headers: { 'Content-Type': 'application/json' }
     }).then(function() {
       setWaitingAuth(true)
+      setInprogress(false)
     })
   }
 
@@ -90,7 +93,7 @@ function Login() {
           />
         </div>
         <div>
-          <button>Login</button>
+          <button disabled={inProgress}>Login</button>
         </div>
       </form>
     </div>
