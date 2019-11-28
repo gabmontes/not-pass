@@ -117,7 +117,12 @@ app.get('/login', [
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res, next) {
-    io.sockets.connected[req.retrievedSession.socketId].emit('authorized')
+    const socket = io.sockets.connected[req.retrievedSession.socketId]
+    if (!socket) {
+      res.redirect(303, `${webUrl}/authorization?message=manualRefresh`)
+      return
+    }
+    socket.emit('authorized')
     delete req.retrievedSession.socketId
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
