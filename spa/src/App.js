@@ -1,11 +1,9 @@
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
 import React from 'react'
 
-import Authorized from './components/authorized'
+import Authorization from './components/authorization'
 import Home from './components/home'
 import Login from './components/login'
-import Unauthorized from './components/unauthorized'
-import Waiting from './components/waiting'
 
 function App() {
   return (
@@ -14,14 +12,8 @@ function App() {
         <Route path="/login">
           <Login></Login>
         </Route>
-        <Route path="/waiting">
-          <Waiting></Waiting>
-        </Route>
-        <Route path="/authorized">
-          <Authorized></Authorized>
-        </Route>
-        <Route path="/unauthorized">
-          <Unauthorized></Unauthorized>
+        <Route path="/authorization">
+          <Authorization></Authorization>
         </Route>
         <Route path="/">
           <Home></Home>

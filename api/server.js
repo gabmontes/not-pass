@@ -37,7 +37,7 @@ app.use(cors({ origin: true, credentials: true }))
 app.get('/me', [
   function(req, res) {
     if (!req.session.authorized) {
-      res.sendStatus(401)
+      res.sendStatus(req.session.authCode ? 403 : 401)
       return
     }
     res.json({ email: req.session.email })
@@ -97,7 +97,7 @@ app.get('/login', [
         return
       }
       if (!session) {
-        res.sendStatus(400)
+        res.redirect(303, `${webUrl}/authorization?err=noSession`)
         return
       }
       req.retrievedSession = session
@@ -106,7 +106,7 @@ app.get('/login', [
   },
   function(req, res, next) {
     if (req.retrievedSession.authCode !== req.query.authCode) {
-      res.redirect(303, `${webUrl}/unauthorized`)
+      res.redirect(303, `${webUrl}/authorization?err=codeMismatch`)
       return
     }
     next()
@@ -117,12 +117,12 @@ app.get('/login', [
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res, next) {
-    io.sockets.connected[req.retrievedSession.socketId].emit('login')
+    io.sockets.connected[req.retrievedSession.socketId].emit('authorized')
     delete req.retrievedSession.socketId
     req.sessionStore.set(req.query.sessionId, req.retrievedSession, next)
   },
   function(req, res) {
-    res.redirect(303, `${webUrl}/authorized`)
+    res.redirect(303, `${webUrl}/authorization`)
   }
 ])
 
@@ -149,11 +149,11 @@ io.use(function(socket, next) {
 
 io.on('connect', function(socket) {
   if (!socket.handshake.session.email || !socket.handshake.session.authCode) {
-    socket.emit('relogin')
+    socket.emit('unauthorized')
     return
   }
   if (socket.handshake.session.authorized) {
-    socket.emit('login')
+    socket.emit('authorized')
   }
 })
 
